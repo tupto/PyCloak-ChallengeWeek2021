@@ -2,7 +2,7 @@ import cv2 #opencv for image processing
 import numpy as np
 
 #creating a videocapture object
-cap = cv2.VideoCapture(0) #this is my webcam
+cap = cv2.VideoCapture(0) #WARNING, YOUR WEBCAM IS PROBABLY INDEX 0, YOU MAY HAVE TO CHANGE IT IF I FORGET
 
 
 
@@ -11,30 +11,30 @@ while cap.isOpened():
     haveBg, background = cap.read() #simply reading from the web cam
     
     #colour range (green)
-    hsv = cv2.cvtColor(background, cv2.COLOR_BGR2HSV)
-    lower_bound = np.array([25, 25, 25])     
-    upper_bound = np.array([255, 255, 255])
+    lower_bound = np.array([50, 80, 50])     
+    upper_bound = np.array([90, 255, 255])
     
-    mask = cv2.inRange(hsv, lower_bound, upper_bound)
 
-    while haveBg: #we have a background
+    ret = 1
+    while haveBg and ret: #we have a background
         ret, currFrame = cap.read()
         
-        #get the difference between the current frame and the first frame
-        cloak = cv2.absdiff(background, currFrame)
-        
         #create a mask of everything that has changed
-        mask = cv2.inRange(cloak, lower_bound, upper_bound)
+        hsv = cv2.cvtColor(currFrame, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, lower_bound, upper_bound)
+        
         #create a mask of everything that has NOT changed
         antiMask = cv2.bitwise_not(mask)
+        
         #mask the image
+        cloak = cv2.bitwise_and(background, background, mask=mask)
         antiCloak = cv2.bitwise_and(currFrame, currFrame, mask=antiMask)
         
         #combine the
         combination = cv2.add(cloak, antiCloak)
         
         if ret:
-            cv2.imshow("image", combination)
+            cv2.imshow("image", mask)
             if cv2.waitKey(5) == ord('q'):
                 #save the background image
                 cv2.imwrite("image.jpg", background)
